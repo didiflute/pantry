@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0047)file:///C:/Users/zwd89/Downloads/pantry_11.html -->
+<!-- saved from url=(0047)file:///C:/Users/zwd89/Downloads/pantry_13.html -->
 <html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -124,6 +124,19 @@ body{
 /* ── CONTENT ── */
 .content{padding:12px 14px 100px}
 
+
+/* Expiry quick buttons */
+.expiry-quick{
+  padding:7px 13px;border-radius:20px;
+  border:1.5px solid var(--border);
+  background:white;font-size:12px;font-weight:600;
+  font-family:'Noto Sans SC',sans-serif;
+  color:var(--muted);cursor:pointer;
+  transition:all 0.15s;
+}
+.expiry-quick:active,.expiry-quick.selected{
+  background:#F5EFE8;border-color:#D4A870;color:var(--text);
+}
 /* ── EXPIRE BANNER ── */
 .expire-banner{
   background:#2C1810;
@@ -498,27 +511,29 @@ body{
     <div class="modal-handle"></div>
     <div class="modal-title">添加食物</div>
 
-
-
-    <!-- Emoji auto-suggest + manual pick -->
+    <!-- ① 名称 — 必填，最重要 -->
     <div class="form-group">
-      <label class="form-label">图标（输完名称自动匹配）</label>
-      <div id="emojiSelected" style="display:flex;align-items:center;gap:10px;background:#F8F4EF;border-radius:12px;padding:10px 14px;margin-bottom:8px">
-        <span id="emojiPreview" style="font-size:32px">🥫</span>
-        <span style="font-size:13px;color:var(--muted)">自动匹配 · 也可手动选👇</span>
+      <label class="form-label">名称 <span style="color:var(--instant)">*</span></label>
+      <input class="form-input" id="addName" placeholder="例：八宝粥、泡面、坚果…" type="text" oninput="onNameInput(this.value)" style="font-size:16px;padding:13px 16px">
+    </div>
+
+    <!-- ② 过期日期 — 必填，快捷按钮 -->
+    <div class="form-group">
+      <label class="form-label">过期日期 <span style="color:var(--instant)">*</span></label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="expiry-quick" onclick="setExpiryQuick(1,&#39;month&#39;)">+1个月</button>
+        <button class="expiry-quick" onclick="setExpiryQuick(3,&#39;month&#39;)">+3个月</button>
+        <button class="expiry-quick" onclick="setExpiryQuick(6,&#39;month&#39;)">+6个月</button>
+        <button class="expiry-quick" onclick="setExpiryQuick(1,&#39;year&#39;)">+1年</button>
+        <button class="expiry-quick" onclick="setExpiryQuick(2,&#39;year&#39;)">+2年</button>
       </div>
-      <div class="emoji-grid" id="emojiGrid"></div>
+      <input class="form-input" id="addExpiry" type="date" style="font-size:15px" onchange="document.getElementById(&#39;expiryHint&#39;).textContent=this.value?&#39;到期：&#39;+this.value.replace(/-/g,&#39;/&#39;):&#39;&#39;; document.querySelectorAll(&#39;.expiry-quick&#39;).forEach(b=&gt;b.classList.remove(&#39;selected&#39;))">
+      <div id="expiryHint" style="font-size:11px;color:var(--muted);margin-top:4px;height:16px"></div>
     </div>
 
-    <!-- Name -->
+    <!-- ③ 分类 — 自动判断，可调 -->
     <div class="form-group">
-      <label class="form-label">名称</label>
-      <input class="form-input" id="addName" placeholder="例：八宝粥" type="text" oninput="onNameInput(this.value)">
-    </div>
-
-    <!-- Category -->
-    <div class="form-group">
-      <label class="form-label">分类</label>
+      <label class="form-label">分类 <span style="font-size:11px;color:var(--muted);font-weight:400">自动判断，可调整</span></label>
       <div class="cat-pills">
         <button class="cat-pill selected" data-cat="instant" onclick="selectCat(this)">⚡ 即食</button>
         <button class="cat-pill" data-cat="quick" onclick="selectCat(this)">🍜 速食</button>
@@ -528,15 +543,19 @@ body{
       </div>
     </div>
 
-    <!-- Expiry -->
+    <!-- ④ emoji — 自动匹配，可调 -->
     <div class="form-group">
-      <label class="form-label">过期日期（可选）</label>
-      <input class="form-input" id="addExpiry" type="date">
+      <label class="form-label">图标 <span style="font-size:11px;color:var(--muted);font-weight:400">自动匹配，可调整</span></label>
+      <div style="display:flex;align-items:center;gap:10px;background:#F8F4EF;border-radius:12px;padding:8px 14px;margin-bottom:8px">
+        <span id="emojiPreview" style="font-size:28px">🥣</span>
+        <span style="font-size:12px;color:var(--muted)">输入名称后自动匹配</span>
+      </div>
+      <div class="emoji-grid" id="emojiGrid"><div class="emoji-opt selected" onclick="selectEmoji(this,&#39;🥣&#39;)">🥣</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🥫&#39;)">🥫</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🍵&#39;)">🍵</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;☕&#39;)">☕</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🍜&#39;)">🍜</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🍪&#39;)">🍪</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🥜&#39;)">🥜</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🧃&#39;)">🧃</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🥤&#39;)">🥤</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🍫&#39;)">🍫</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🧈&#39;)">🧈</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🥚&#39;)">🥚</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🥕&#39;)">🥕</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🧂&#39;)">🧂</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🫒&#39;)">🫒</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🍯&#39;)">🍯</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🌶&#39;)">🌶</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🥦&#39;)">🥦</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🍅&#39;)">🍅</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🍗&#39;)">🍗</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🥩&#39;)">🥩</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🐟&#39;)">🐟</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🍎&#39;)">🍎</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🍌&#39;)">🍌</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🧄&#39;)">🧄</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🫙&#39;)">🫙</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🫘&#39;)">🫘</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🥛&#39;)">🥛</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🍳&#39;)">🍳</div><div class="emoji-opt" onclick="selectEmoji(this,&#39;🥗&#39;)">🥗</div></div>
     </div>
 
-    <!-- Qty -->
+    <!-- ⑤ 存量 — 默认「多」，可调 -->
     <div class="form-group">
-      <label class="form-label">存量</label>
+      <label class="form-label">存量 <span style="font-size:11px;color:var(--muted);font-weight:400">默认「多」</span></label>
       <div class="qty-pills">
         <button class="qty-pill selected" data-qty="多" onclick="selectQty(this)">多</button>
         <button class="qty-pill" data-qty="少" onclick="selectQty(this)">少</button>
@@ -544,18 +563,18 @@ body{
       </div>
     </div>
 
-    <!-- Note -->
+    <!-- ⑥ 备注 — 可选 -->
     <div class="form-group">
-      <label class="form-label">备注（可选）</label>
+      <label class="form-label">备注 <span style="font-size:11px;color:var(--muted);font-weight:400">可选</span></label>
       <textarea class="form-textarea" id="addNote" placeholder="例：加鸡蛋超好吃 / 快点吃别忘了…"></textarea>
     </div>
 
-    <!-- Photo -->
+    <!-- ⑦ 照片 — 可选 -->
     <div class="form-group">
-      <label class="form-label">照片（可选）</label>
+      <label class="form-label">照片 <span style="font-size:11px;color:var(--muted);font-weight:400">可选</span></label>
       <div class="photo-upload" onclick="document.getElementById(&#39;photoInput&#39;).click()">
-        <img class="photo-preview" id="photoPreview">
-        <div id="photoPlaceholder">
+        <img class="photo-preview" id="photoPreview" style="display: none;">
+        <div id="photoPlaceholder" style="display: block;">
           <div style="font-size:24px">📷</div>
           <div class="photo-upload-text">点击上传照片</div>
         </div>
@@ -815,7 +834,14 @@ function renderList(){
 
   // sort: danger first, then warn, then ok, then expired
   const order={danger:0,warn:1,ok:2,expired:3};
-  catItems.sort((a,b)=>order[getStatus(a.expiry)]-order[getStatus(b.expiry)]);
+  catItems.sort((a,b)=>{
+    const sd=order[getStatus(a.expiry)]-order[getStatus(b.expiry)];
+    if(sd!==0) return sd;
+    if(!a.expiry&&!b.expiry) return 0;
+    if(!a.expiry) return 1;
+    if(!b.expiry) return -1;
+    return a.expiry.localeCompare(b.expiry);
+  });
 
   list.innerHTML = catItems.map((item,idx)=>{
     const status=getStatus(item.expiry);
@@ -876,7 +902,7 @@ function openAddModal(){
   selectedCat=currentTab;
   selectedQty='多';
   document.getElementById('addName').value='';
-  document.getElementById('addExpiry').value='';
+  document.getElementById('addExpiry').value=''; document.getElementById('expiryHint').textContent=''; document.querySelectorAll('.expiry-quick').forEach(b=>b.classList.remove('selected'));
   document.getElementById('addNote').value='';
   document.getElementById('photoPreview').style.display='none';
   document.getElementById('photoPlaceholder').style.display='block';
@@ -902,6 +928,20 @@ function handlePhoto(e){
 
 
 
+
+function setExpiryQuick(amount, unit){
+  const d = new Date();
+  if(unit==='month') d.setMonth(d.getMonth()+amount);
+  else d.setFullYear(d.getFullYear()+amount);
+  const val = d.toISOString().slice(0,10);
+  document.getElementById('addExpiry').value = val;
+  // update hint
+  const hint = document.getElementById('expiryHint');
+  if(hint) hint.textContent = '到期：' + val.replace(/-/g,'/');
+  // highlight selected button
+  document.querySelectorAll('.expiry-quick').forEach(b=>b.classList.remove('selected'));
+  event.target.classList.add('selected');
+}
 function submitAdd(){
   const name=document.getElementById('addName').value.trim();
   if(!name){ document.getElementById('addName').focus(); return; }
