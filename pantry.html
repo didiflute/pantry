@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0046)file:///C:/Users/zwd89/Downloads/pantry_7.html -->
+<!-- saved from url=(0047)file:///C:/Users/zwd89/Downloads/pantry_11.html -->
 <html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -126,25 +126,31 @@ body{
 
 /* ── EXPIRE BANNER ── */
 .expire-banner{
-  background:linear-gradient(135deg,#FFF0EB,#FFE8DC);
-  border:1px solid #FFD0B8;
+  background:#2C1810;
   border-radius:var(--radius);
-  padding:10px 14px;
-  margin-bottom:12px;
+  padding:14px 16px;
+  margin-bottom:14px;
   display:none;
+  animation:fadeUp 0.3s ease both;
 }
 .expire-banner.visible{display:block}
 .expire-banner-title{
-  font-size:12px;font-weight:600;color:#C03010;
-  margin-bottom:6px;display:flex;align-items:center;gap:5px;
+  font-size:13px;font-weight:700;color:#FFE8DC;
+  margin-bottom:10px;display:flex;align-items:center;gap:6px;
+  letter-spacing:0.3px;
 }
 .expire-items-row{display:flex;flex-wrap:wrap;gap:6px}
 .expire-item-tag{
-  background:white;border:1px solid #FFD0B8;
-  border-radius:20px;padding:3px 10px;
-  font-size:11px;color:#C03010;font-weight:500;
-  display:flex;align-items:center;gap:4px;
+  background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.2);
+  border-radius:20px;padding:5px 12px;
+  font-size:12px;color:white;font-weight:500;
+  display:flex;align-items:center;gap:5px;
+  cursor:pointer;transition:background 0.15s;
 }
+.expire-item-tag:active{background:rgba(255,255,255,0.22);}
+.expire-item-tag.danger{color:#FFB0A0;}
+.expire-item-tag.warn{color:#FFD090;}
 
 /* ── ITEM CARD ── */
 .item-card{
@@ -419,20 +425,7 @@ body{
   object-fit:cover;max-height:140px;display:none;
 }
 
-/* AI scan area */
-.ai-scan-btn{
-  width:100%;padding:12px;
-  background:linear-gradient(135deg,#FFF3E8,#FFE8D0);
-  border:1.5px solid #FFD0A8;
-  border-radius:12px;
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  font-size:13px;font-weight:600;color:#C07020;
-  font-family:'Noto Sans SC',sans-serif;
-  cursor:pointer;margin-bottom:14px;
-  transition:opacity 0.15s;
-}
-.ai-scan-btn:active{opacity:0.8}
-.ai-input{display:none}
+
 
 /* Settings / backup */
 .settings-btn{
@@ -452,23 +445,7 @@ body{
   padding:4px 2px 8px;
 }
 
-/* AI loading */
-.ai-loading{
-  display:none;align-items:center;gap:8px;
-  background:#FFF8F0;border-radius:10px;
-  padding:10px 14px;margin-bottom:10px;
-  font-size:12px;color:#C07020;
-  border:1px solid #FFD0A8;
-}
-.ai-loading.visible{display:flex}
-.spinner{
-  width:16px;height:16px;
-  border:2px solid #FFD0A8;
-  border-top-color:#C07020;
-  border-radius:50%;
-  animation:spin 0.8s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
+
 </style>
 </head>
 <body>
@@ -493,7 +470,7 @@ body{
 <!-- CONTENT -->
 <div class="content" id="content">
   <div class="expire-banner" id="expireBanner">
-    <div class="expire-banner-title">⚠️ 快过期，先吃这些</div>
+    <div class="expire-banner-title">⚠️ 快过期，先吃这些！</div>
     <div class="expire-items-row" id="expireItemsRow"></div>
   </div>
   <div id="itemList"></div>
@@ -501,6 +478,13 @@ body{
     <div class="empty-illo">🫙</div>
     <div class="empty-text">这里还没有食物<br>点下方按钮添加吧～</div>
   </div>
+</div>
+
+<!-- SHOPPING LIST PANEL -->
+<div id="shopPanel" style="display:none;position:fixed;bottom:80px;right:16px;z-index:150">
+  <button onclick="openShopModal()" style="background:var(--text);color:white;border:none;border-radius:50px;padding:10px 16px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;box-shadow:0 4px 16px rgba(44,24,16,0.25);display:flex;align-items:center;gap:6px">
+    🛒 <span id="shopCount">0</span>件待购
+  </button>
 </div>
 
 <!-- FAB -->
@@ -514,26 +498,22 @@ body{
     <div class="modal-handle"></div>
     <div class="modal-title">添加食物</div>
 
-    <!-- AI scan -->
-    <div class="ai-scan-btn" onclick="triggerAiScan()">
-      <span>✨</span> 拍照让AI识别名称和日期
-    </div>
-    <input type="file" class="ai-input" id="aiInput" accept="image/*" capture="environment" onchange="handleAiScan(event)">
-    <div class="ai-loading" id="aiLoading">
-      <div class="spinner"></div>
-      <span>AI识别中，请稍候…</span>
-    </div>
 
-    <!-- Emoji -->
+
+    <!-- Emoji auto-suggest + manual pick -->
     <div class="form-group">
-      <label class="form-label">选择图标</label>
+      <label class="form-label">图标（输完名称自动匹配）</label>
+      <div id="emojiSelected" style="display:flex;align-items:center;gap:10px;background:#F8F4EF;border-radius:12px;padding:10px 14px;margin-bottom:8px">
+        <span id="emojiPreview" style="font-size:32px">🥫</span>
+        <span style="font-size:13px;color:var(--muted)">自动匹配 · 也可手动选👇</span>
+      </div>
       <div class="emoji-grid" id="emojiGrid"></div>
     </div>
 
     <!-- Name -->
     <div class="form-group">
       <label class="form-label">名称</label>
-      <input class="form-input" id="addName" placeholder="例：八宝粥" type="text">
+      <input class="form-input" id="addName" placeholder="例：八宝粥" type="text" oninput="onNameInput(this.value)">
     </div>
 
     <!-- Category -->
@@ -587,6 +567,20 @@ body{
   </div>
 </div>
 
+<!-- SHOPPING LIST MODAL -->
+<div class="modal-overlay" id="shopModal" onclick="handleOverlayClick(event,&#39;shopModal&#39;)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🛒 购物清单</div>
+    <div id="shopList"></div>
+    <div class="empty" id="shopEmpty" style="display:none;padding:24px 0">
+      <div class="empty-illo" style="font-size:32px">🛒</div>
+      <div class="empty-text">清单是空的<br>吃完东西时可以加进来～</div>
+    </div>
+    <button onclick="clearShopList()" style="width:100%;margin-top:12px;padding:12px;background:#FFF0EC;border:1.5px solid #FFD0C0;border-radius:50px;font-size:13px;font-weight:600;font-family:inherit;color:var(--instant);cursor:pointer">清空清单</button>
+  </div>
+</div>
+
 <!-- DETAIL MODAL -->
 <div class="modal-overlay" id="detailModal" onclick="handleOverlayClick(event,&#39;detailModal&#39;)">
   <div class="modal" id="detailContent"></div>
@@ -624,6 +618,109 @@ let selectedCat = 'instant';
 let selectedQty = '多';
 
 const EMOJIS = ['🥣','🥫','🍵','🍜','🍪','🥜','☕','🧃','🥤','🍫','🍬','🧈','🥚','🥕','🧄','🧅','🫙','🫘','🍱','🥗','🧆','🍳','🥞','🧇','🫕','🍲','🥘','🍛','🍝','🧀','🥩','🍗','🦪','🐟','🥦','🍅','🧂','🫒','🍯','🌶','🫐','🍓','🍋','🥭','🍊','🍎','🍌','🍉','🍇'];
+
+// Auto emoji matching by keyword
+const EMOJI_MAP = [
+  [['粥','八宝','燕麦','麦片','粗粮'],'🥣'],
+  [['罐头','番茄','豆','金枪鱼','沙丁'],'🥫'],
+  [['茶','绿茶','红茶','花茶','普洱'],'🍵'],
+  [['咖啡','拿铁','速溶'],'☕'],
+  [['泡面','方便面','拉面','面条','米粉','河粉','乌冬'],'🍜'],
+  [['饼干','曲奇','威化','饼'],'🍪'],
+  [['坚果','核桃','杏仁','腰果','花生','瓜子','榛子'],'🥜'],
+  [['果汁','橙汁','苹果汁','饮料'],'🧃'],
+  [['奶茶','可乐','汽水','啤酒'],'🥤'],
+  [['巧克力','朱古力'],'🍫'],
+  [['糖','软糖','棒棒糖','糖果'],'🍬'],
+  [['黄油','奶油','芝士','奶酪'],'🧈'],
+  [['鸡蛋','蛋'],'🥚'],
+  [['胡萝卜','萝卜'],'🥕'],
+  [['大蒜','蒜'],'🧄'],
+  [['洋葱','葱'],'🧅'],
+  [['酱料','酱','酱汁','豆瓣酱','辣酱'],'🫙'],
+  [['豆','黄豆','绿豆','红豆','黑豆'],'🫘'],
+  [['便当','盒饭','饭盒'],'🍱'],
+  [['沙拉','生菜'],'🥗'],
+  [['鸡肉','鸡腿','鸡胸'],'🍗'],
+  [['猪肉','牛肉','羊肉','肉'],'🥩'],
+  [['鱼','三文鱼','金枪'],'🐟'],
+  [['西红柿','番茄'],'🍅'],
+  [['花椰菜','西兰花','蔬菜'],'🥦'],
+  [['盐','糖'],'🧂'],
+  [['橄榄油','油'],'🫒'],
+  [['蜂蜜'],'🍯'],
+  [['辣椒','花椒','胡椒'],'🌶'],
+  [['蓝莓'],'🫐'],
+  [['草莓'],'🍓'],
+  [['柠檬'],'🍋'],
+  [['芒果'],'🥭'],
+  [['橙','橘'],'🍊'],
+  [['苹果'],'🍎'],
+  [['香蕉'],'🍌'],
+  [['西瓜'],'🍉'],
+  [['葡萄'],'🍇'],
+  [['年糕','汤圆','粽子','月饼'],'🍡'],
+  [['牛奶','豆浆','奶','燕麦奶'],'🥛'],
+];
+
+function autoEmoji(name){
+  if(!name) return '🥫';
+  for(const [keywords, emoji] of EMOJI_MAP){
+    if(keywords.some(k => name.includes(k))) return emoji;
+  }
+  return '🥫';
+}
+
+// Shopping list
+let shopItems = [];
+const SHOP_KEY = 'pantry_shop_v1';
+function loadShop(){ try{ shopItems=JSON.parse(localStorage.getItem(SHOP_KEY))||[]; }catch(e){ shopItems=[]; } }
+function saveShop(){ localStorage.setItem(SHOP_KEY, JSON.stringify(shopItems)); }
+
+function updateShopPanel(){
+  const panel = document.getElementById('shopPanel');
+  const count = document.getElementById('shopCount');
+  if(panel){ panel.style.display = shopItems.length ? 'block' : 'none'; }
+  if(count){ count.textContent = shopItems.length; }
+}
+
+function openShopModal(){
+  const list = document.getElementById('shopList');
+  const empty = document.getElementById('shopEmpty');
+  if(!shopItems.length){
+    list.innerHTML='';
+    empty.style.display='block';
+  } else {
+    empty.style.display='none';
+    list.innerHTML = shopItems.map((s,i)=>`
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--border)">
+        <div style="font-size:24px">${s.emoji}</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600;color:var(--text)">${s.name}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">已吃完 · 需要补货</div>
+        </div>
+        <button onclick="removeShopItem(${i})" style="background:#F5EFE8;border:none;border-radius:20px;padding:4px 12px;font-size:12px;color:var(--muted);cursor:pointer">✓ 已买</button>
+      </div>`).join('');
+  }
+  document.getElementById('shopModal').classList.add('open');
+}
+
+function removeShopItem(idx){
+  shopItems.splice(idx,1);
+  saveShop(); updateShopPanel(); openShopModal();
+}
+
+function clearShopList(){
+  shopItems=[];
+  saveShop(); updateShopPanel(); closeModal('shopModal');
+}
+
+function addToShopList(item){
+  if(!shopItems.find(s=>s.name===item.name)){
+    shopItems.push({name:item.name, emoji:item.emoji});
+    saveShop(); updateShopPanel();
+  }
+}
 
 const CAT_COLORS = {
   instant:{color:'#E85030',bg:'#FFF3EE',label:'⚡ 即食'},
@@ -689,7 +786,7 @@ function renderList(){
   const empty = document.getElementById('emptyState');
   const banner = document.getElementById('expireBanner');
   const expireRow = document.getElementById('expireItemsRow');
-  const chip = document.querySelector('.expire-chip');
+  const chip = document.getElementById('expireChip');
 
   // expire banner: items expiring within 7 days across ALL categories
   const urgent = items.filter(i=>{const s=getStatus(i.expiry);return s==='danger'||s==='warn';})
@@ -697,15 +794,16 @@ function renderList(){
 
   if(urgent.length){
     banner.classList.add('visible');
-    chip.classList.add('visible');
-    chip.textContent = `⚠ ${urgent.length}件快过期`;
-    expireRow.innerHTML = urgent.slice(0,5).map(i=>`
-      <div class="expire-item-tag" onclick="openDetail('${i.id}')">
+    if(chip){ chip.classList.add('visible'); chip.textContent = `⚠ ${urgent.length}件快过期`; }
+    expireRow.innerHTML = urgent.slice(0,6).map(i=>{
+      const s=getStatus(i.expiry);
+      return `<div class="expire-item-tag ${s}" onclick="openDetail('${i.id}')">
         ${i.emoji} ${i.name} · ${formatExpiry(i.expiry)}
-      </div>`).join('');
+      </div>`;
+    }).join('');
   } else {
     banner.classList.remove('visible');
-    chip.classList.remove('visible');
+    if(chip){ chip.classList.remove('visible'); }
   }
 
   if(!catItems.length){
@@ -738,14 +836,28 @@ function renderList(){
 }
 
 // ── ADD FLOW ──
+const EMOJI_QUICK = ['🥣','🥫','🍵','☕','🍜','🍪','🥜','🧃','🥤','🍫','🧈','🥚','🥕','🧂','🫒','🍯','🌶','🥦','🍅','🍗','🥩','🐟','🍎','🍌','🧄','🫙','🫘','🥛','🍳','🥗'];
+
 function buildEmojiGrid(){
   const grid=document.getElementById('emojiGrid');
-  grid.innerHTML=EMOJIS.map(e=>`<div class="emoji-opt${e===selectedEmoji?' selected':''}" onclick="selectEmoji(this,'${e}')">${e}</div>`).join('');
+  grid.innerHTML=EMOJI_QUICK.map(e=>`<div class="emoji-opt${e===selectedEmoji?' selected':''}" onclick="selectEmoji(this,'${e}')">${e}</div>`).join('');
+  updateEmojiPreview();
+}
+function updateEmojiPreview(){
+  const p=document.getElementById('emojiPreview');
+  if(p) p.textContent=selectedEmoji;
+}
+function onNameInput(val){
+  const matched=autoEmoji(val);
+  selectedEmoji=matched;
+  updateEmojiPreview();
+  document.querySelectorAll('.emoji-opt').forEach(x=>x.classList.toggle('selected',x.textContent===matched));
 }
 function selectEmoji(el,e){
   selectedEmoji=e;
   document.querySelectorAll('.emoji-opt').forEach(x=>x.classList.remove('selected'));
   el.classList.add('selected');
+  updateEmojiPreview();
 }
 function selectCat(el){
   selectedCat=el.dataset.cat;
@@ -788,67 +900,7 @@ function handlePhoto(e){
   reader.readAsDataURL(file);
 }
 
-function triggerAiScan(){ document.getElementById('aiInput').click(); }
 
-async function handleAiScan(e){
-  const file=e.target.files[0]; if(!file) return;
-  // store as photo too
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    pendingPhoto=ev.target.result;
-    const prev=document.getElementById('photoPreview');
-    prev.src=pendingPhoto; prev.style.display='block';
-    document.getElementById('photoPlaceholder').style.display='none';
-    // call AI
-    callAiRecognize(ev.target.result.split(',')[1]);
-  };
-  reader.readAsDataURL(file);
-}
-
-async function callAiRecognize(base64){
-  const loading=document.getElementById('aiLoading');
-  loading.classList.add('visible');
-  try{
-    const resp = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        messages:[{
-          role:'user',
-          content:[
-            {type:'image',source:{type:'base64',media_type:'image/jpeg',data:base64}},
-            {type:'text',text:`请识别这张食物/商品照片，以JSON格式返回以下字段（仅JSON，不要其他文字）：
-{
-  "name": "食物名称（中文，简短）",
-  "expiry": "过期日期，格式YYYY-MM-DD，从包装上读取，如果看不到则返回null",
-  "emoji": "最合适的单个emoji",
-  "cat": "分类，只能是以下之一：instant（即食罐头粥等）/ quick（泡面速食）/ snack（饼干零食坚果咖啡茶饮品）/ fridge（生鲜冷藏）/ condiment（酱料调料）"
-}`}
-          ]
-        }]
-      })
-    });
-    const data=await resp.json();
-    const text=data.content?.[0]?.text||'';
-    const clean=text.replace(/```json|```/g,'').trim();
-    const parsed=JSON.parse(clean);
-    if(parsed.name) document.getElementById('addName').value=parsed.name;
-    if(parsed.expiry) document.getElementById('addExpiry').value=parsed.expiry;
-    if(parsed.emoji){
-      selectedEmoji=parsed.emoji;
-      buildEmojiGrid();
-    }
-    if(parsed.cat){
-      selectedCat=parsed.cat;
-      document.querySelectorAll('.cat-pill').forEach(p=>p.classList.toggle('selected',p.dataset.cat===parsed.cat));
-    }
-  } catch(err){
-    console.error(err);
-  }
-  loading.classList.remove('visible');
-}
 
 function submitAdd(){
   const name=document.getElementById('addName').value.trim();
@@ -901,20 +953,70 @@ function openDetail(id){
       <div class="detail-note-text">"${item.note}"</div>
     </div>`:''}
     ${item.photo?`<img class="detail-photo" src="${item.photo}">`:''}
-    <div class="detail-actions">
+    <div class="detail-actions" style="flex-wrap:wrap;gap:8px">
       <button class="btn-eaten" onclick="markEaten('${item.id}')">✓ 吃完了</button>
       <button class="btn-delete" onclick="deleteItem('${item.id}')">✕ 删除</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button onclick="quickQty('${item.id}','多')" style="flex:1;padding:10px;border-radius:50px;border:1.5px solid var(--border);background:${item.qty==='多'?'#F5EFE8':'white'};font-size:13px;font-weight:${item.qty==='多'?'700':'400'};color:${item.qty==='多'?'#2C1810':'#A09080'};cursor:pointer">多</button>
+      <button onclick="quickQty('${item.id}','少')" style="flex:1;padding:10px;border-radius:50px;border:1.5px solid var(--border);background:${item.qty==='少'?'#F5EFE8':'white'};font-size:13px;font-weight:${item.qty==='少'?'700':'400'};color:${item.qty==='少'?'#2C1810':'#A09080'};cursor:pointer">少</button>
+      <button onclick="quickQty('${item.id}','最后一个')" style="flex:1;padding:10px;border-radius:50px;border:1.5px solid var(--border);background:${item.qty==='最后一个'?'#FFE8DC':'white'};font-size:13px;font-weight:${item.qty==='最后一个'?'700':'400'};color:${item.qty==='最后一个'?'#C03010':'#A09080'};cursor:pointer">最后1个</button>
+    </div>
+    <div style="margin-top:8px">
+      <textarea id="editNote_${item.id}" placeholder="备注（可修改）…" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;resize:none;height:68px;outline:none;background:white;color:var(--text)">${item.note||''}</textarea>
+      <button onclick="saveNote('${item.id}')" style="width:100%;margin-top:6px;padding:11px;background:#F5EFE8;border:1.5px solid #D4A870;border-radius:50px;font-size:13px;font-weight:600;font-family:inherit;color:#2C1810;cursor:pointer">保存备注</button>
     </div>
   `;
   document.getElementById('detailModal').classList.add('open');
 }
 function markEaten(id){
+  const item=items.find(i=>i.id===id);
   items=items.filter(i=>i.id!==id);
   save(); closeModal('detailModal'); renderList();
+  if(item){
+    // show toast asking to add to shopping list
+    showToast(item);
+  }
+}
+
+function showToast(item){
+  const existing=document.getElementById('eatToast');
+  if(existing) existing.remove();
+  const toast=document.createElement('div');
+  toast.id='eatToast';
+  toast.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#2C1810;color:white;border-radius:50px;padding:12px 20px;font-size:13px;font-weight:500;font-family:inherit;display:flex;align-items:center;gap:12px;z-index:500;box-shadow:0 4px 20px rgba(44,24,16,0.3);white-space:nowrap;animation:fadeUp 0.2s ease';
+  toast.innerHTML=`<span>${item.emoji} ${item.name} 吃完了！</span>
+    <button onclick="addToShopAndDismiss('${item.name}','${item.emoji}')" style="background:#E85030;color:white;border:none;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">+ 加入购物清单</button>
+    <button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:20px;padding:5px 10px;font-size:12px;font-family:inherit;cursor:pointer">不用</button>`;
+  document.body.appendChild(toast);
+  setTimeout(()=>{ if(document.getElementById('eatToast')) toast.remove(); }, 5000);
+}
+
+function addToShopAndDismiss(name, emoji){
+  addToShopList({name, emoji});
+  const toast=document.getElementById('eatToast');
+  if(toast){
+    toast.innerHTML=`<span>✓ 已加入购物清单！</span>`;
+    setTimeout(()=>toast.remove(), 1500);
+  }
 }
 function deleteItem(id){
   items=items.filter(i=>i.id!==id);
   save(); closeModal('detailModal'); renderList();
+}
+function quickQty(id, qty){
+  const item=items.find(i=>i.id===id);
+  if(!item) return;
+  item.qty=qty; save();
+  openDetail(id);
+}
+function saveNote(id){
+  const item=items.find(i=>i.id===id);
+  if(!item) return;
+  const note=document.getElementById('editNote_'+id).value.trim();
+  item.note=note||null; save(); renderList();
+  const btn=document.querySelector(`#editNote_${id} + button`);
+  if(btn){ btn.textContent='✓ 已保存'; btn.style.background='#EDF5E0'; btn.style.borderColor='#C8E0A8'; btn.style.color='#3A7020'; setTimeout(()=>{ btn.textContent='保存备注'; btn.style.background='#F5EFE8'; btn.style.borderColor='#D4A870'; btn.style.color='#2C1810'; },1500); }
 }
 
 // ── SETTINGS ──
@@ -938,6 +1040,7 @@ function importData(e){
 
 // ── INIT ──
 load();
+loadShop();
 // Add settings button to header overlay
 const overlay=document.querySelector('.header-overlay');
 overlay.innerHTML=`<div>
@@ -948,9 +1051,10 @@ overlay.innerHTML=`<div>
   <button class="settings-btn" onclick="openSettings()">⚙</button>
 </div>`;
 // Also update chip selector reference
-document.querySelector = (sel) => document._querySelector ? document._querySelector(sel) : (document._querySelector=document.querySelector.bind(document))(sel);
+
 
 switchTab('instant');
+updateShopPanel();
 // seed sample data if empty
 if(!items.length){
   items=[
